@@ -1,0 +1,31 @@
+# Builds the React dashboard into static files and serves them with nginx.
+#
+# In production, the dashboard is just HTML/CSS/JS — no Node server needed.
+# nginx serves the static files and handles SPA routing (all paths → index.html).
+
+# --- Stage 1: Build ---
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+COPY dashboard/package.json dashboard/package-lock.json ./
+RUN npm ci
+COPY dashboard/ .
+RUN npm run build
+
+# --- Stage 2: Serve with nginx ---
+FROM nginx:alpine
+
+# Copy built files to nginx's serve directory
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# SPA routing: all paths should serve index.html (React Router handles the rest)
+RUN echo 'server { \
+    listen 80; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80

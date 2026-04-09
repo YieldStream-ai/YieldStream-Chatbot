@@ -1,0 +1,24 @@
+# Lambda container image — uses AWS's base image which includes the Lambda runtime.
+#
+# Why a Docker image instead of a zip?
+# - Our dependencies (asyncpg, bcrypt) compile native C code
+# - They must be compiled for Amazon Linux (Lambda's OS), not macOS
+# - Docker handles this automatically by building inside the right environment
+
+FROM public.ecr.aws/lambda/python:3.12
+
+# Install system deps for asyncpg and bcrypt
+RUN dnf install -y gcc libpq-devel && dnf clean all
+
+# Install Python dependencies
+COPY backend/pyproject.toml ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir ${LAMBDA_TASK_ROOT}/
+
+# Copy application code
+COPY backend/app ${LAMBDA_TASK_ROOT}/app
+
+# Tell Lambda which function to call when a request comes in.
+# This points to: infra/aws/lambda_handler.py → handler variable
+COPY infra/aws/lambda_handler.py ${LAMBDA_TASK_ROOT}/
+
+CMD ["lambda_handler.handler"]

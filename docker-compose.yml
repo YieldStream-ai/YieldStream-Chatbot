@@ -1,0 +1,51 @@
+# Docker Compose — run the full stack with `docker compose up`
+#
+# What this does:
+# - "api" container: runs the FastAPI backend on port 8000
+# - "dashboard" container: serves the React app on port 5173
+# - "db" container: runs PostgreSQL on port 5432
+#
+# For local dev, you can also just run the backend and dashboard directly
+# (uvicorn + npm run dev) without Docker. This is mainly for:
+# - Testing the full stack together
+# - Simulating production
+# - Onboarding new developers who don't have Python/Node installed
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chatwidget
+      POSTGRES_USER: chatwidget
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://chatwidget:localdev@db:5432/chatwidget
+      SECRET_KEY: docker-dev-secret-key-change-in-prod
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: admin
+      DASHBOARD_ORIGIN: http://localhost:5173
+      ENVIRONMENT: development
+    depends_on:
+      - db
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.dashboard
+    ports:
+      - "5173:80"
+
+volumes:
+  pgdata:

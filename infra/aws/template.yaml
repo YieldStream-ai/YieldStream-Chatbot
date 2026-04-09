@@ -1,0 +1,114 @@
+# AWS SAM Template — Infrastructure as Code for the chat widget backend.
+#
+# What this creates:
+#
+# 1. API Gateway (HTTP API)
+#    - The public URL that receives HTTP requests from the widget and dashboard
+#    - Routes all requests to the Lambda function
+#    - Supports CORS, chunked transfer encoding (for SSE streaming)
+#    - Costs: $1 per million requests
+#
+# 2. Lambda Function
+#    - Runs your FastAPI app (via Mangum adapter)
+#    - Only runs when a request comes in — no idle costs
+#    - Scales automatically (100+ concurrent requests no problem)
+#    - Costs: free tier = 1M requests/month, then ~$0.20 per 1M requests
+#
+# 3. The function uses a Docker image (not a zip) because our dependencies
+#    (asyncpg, bcrypt) have native C extensions that need to be compiled
+#    for Amazon Linux.
+#
+# How to deploy:
+#   1. Install AWS SAM CLI: brew install aws-sam-cli
+#   2. Configure AWS credentials: aws configure
+#   3. Build: sam build
+#   4. Deploy: sam deploy --guided
+#      (follow the prompts — it asks for stack name, region, etc.)
+#
+# After deploying, SAM prints the API Gateway URL. Use that as data-api-url
+# in the widget embed code.
+
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Chat Widget API — Lambda + API Gateway
+
+Parameters:
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Description: Google Gemini API key
+  SecretKey:
+    Type: String
+    NoEcho: true
+    Description: JWT signing secret
+  AdminEmail:
+    Type: String
+    Default: admin@example.com
+  AdminPassword:
+    Type: String
+    NoEcho: true
+  DatabaseUrl:
+    Type: String
+    Description: PostgreSQL connection string (e.g. from RDS, Neon, or Supabase)
+  DashboardOrigin:
+    Type: String
+    Default: https://dashboard.yourdomain.com
+    Description: Dashboard URL for CORS
+
+Globals:
+  Function:
+    Timeout: 60  # Seconds — increase if AI responses are slow
+    MemorySize: 512  # MB — more memory = faster CPU (Lambda links them)
+
+Resources:
+  ChatWidgetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          DATABASE_URL: !Ref DatabaseUrl
+          GEMINI_API_KEY: !Ref GeminiApiKey
+          SECRET_KEY: !Ref SecretKey
+          ADMIN_EMAIL: !Ref AdminEmail
+          ADMIN_PASSWORD: !Ref AdminPassword
+          DASHBOARD_ORIGIN: !Ref DashboardOrigin
+          ENVIRONMENT: production
+          RATE_LIMIT_BACKEND: memory  # Use "dynamodb" for distributed rate limiting
+      Events:
+        # This creates an API Gateway HTTP API that routes ALL requests to Lambda
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ChatWidgetApi
+
+    Metadata:
+      Dockerfile: Dockerfile.lambda
+      DockerContext: ../../
+      DockerTag: latest
+
+  ChatWidgetApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref DashboardOrigin
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-API-Key
+          - Authorization
+        MaxAge: 3600
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway URL — use this as data-api-url in the widget
+    Value: !Sub "https://${ChatWidgetApi}.execute-api.${AWS::Region}.amazonaws.com/prod"

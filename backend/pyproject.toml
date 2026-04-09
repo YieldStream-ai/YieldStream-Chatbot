@@ -1,0 +1,43 @@
+[project]
+name = "chat-widget-api"
+version = "0.1.0"
+description = "Embeddable chat widget API powered by Gemini"
+requires-python = ">=3.11"
+dependencies = [
+    # Web framework — async-native, auto-generates OpenAPI docs
+    "fastapi>=0.115",
+    # ASGI server — runs your FastAPI app
+    "uvicorn[standard]>=0.30",
+    # ORM — async mode lets DB queries not block your server
+    "sqlalchemy[asyncio]>=2.0",
+    # Async SQLite driver — lightweight DB for local development
+    "aiosqlite>=0.20",
+    # Async Postgres driver — production database
+    "asyncpg>=0.30",
+    # Database migrations — version-controls your schema changes
+    "alembic>=1.14",
+    # Google Gemini SDK — the AI model powering chat responses
+    "google-genai>=1.0",
+    # JWT tokens — for dashboard admin authentication
+    "pyjwt>=2.9",
+    # Password hashing — securely stores admin passwords
+    "bcrypt>=4.2",
+    # Env file loading — reads .env into environment variables
+    "python-dotenv>=1.0",
+    # Pydantic settings — type-safe config from env vars
+    "pydantic-settings>=2.6",
+    # Lambda adapter — wraps FastAPI for AWS Lambda (used in deployment)
+    "mangum>=0.19",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",       # Async test client for FastAPI
+    "ruff>=0.8",         # Linter + formatter
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100

@@ -1,0 +1,14 @@
+{
+  "name": "chat-widget",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --minify --format=iife --target=es2020 --outfile=dist/chat-widget.min.js",
+    "build:dev": "esbuild src/index.ts --bundle --format=iife --target=es2020 --sourcemap --outfile=dist/chat-widget.js",
+    "watch": "esbuild src/index.ts --bundle --format=iife --target=es2020 --sourcemap --outfile=dist/chat-widget.js --watch --servedir=dev"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0"
+  }
+}

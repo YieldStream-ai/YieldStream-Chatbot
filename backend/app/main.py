@@ -1,19 +1,46 @@
+import logging
+import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from app.api import auth, chat, clients, health
 from app.config import settings
 from app.middleware.cors import DynamicCORSMiddleware
 
 
+def setup_logging():
+    """Configure structured logging. JSON in production, readable in dev."""
+    level = logging.DEBUG if settings.environment == "development" else logging.INFO
+    handler = logging.StreamHandler(sys.stdout)
+
+    if settings.environment == "production":
+        # JSON format for production — parseable by CloudWatch, Datadog, etc.
+        formatter = logging.Formatter(
+            '{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","message":"%(message)s"}'
+        )
+    else:
+        formatter = logging.Formatter(
+            "%(asctime)s %(levelname)-8s %(name)s — %(message)s",
+            datefmt="%H:%M:%S",
+        )
+
+    handler.setFormatter(formatter)
+    logging.basicConfig(level=level, handlers=[handler], force=True)
+
+    # Quiet down noisy libraries
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # --- Startup ---
-    print(f"Starting Chat Widget API ({settings.environment})")
+    setup_logging()
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting Chat Widget API ({settings.environment})")
     yield
-    # --- Shutdown ---
-    print("Shutting down Chat Widget API")
+    logger.info("Shutting down Chat Widget API")
 
 
 app = FastAPI(
@@ -23,12 +50,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add CORS middleware — must be added before routes
 app.add_middleware(DynamicCORSMiddleware)
 
-# Register route groups under /api/v1
-# The prefix means all routes in chat.router start with /api/v1
-# So @router.post("/chat") becomes POST /api/v1/chat
+
+# Global exception handler — catches unhandled errors so they return
+# a clean JSON response instead of a 500 HTML page.
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger = logging.getLogger(__name__)
+    logger.error(f"Unhandled error: {type(exc).__name__}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(chat.router, prefix="/api/v1", tags=["widget"])
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])

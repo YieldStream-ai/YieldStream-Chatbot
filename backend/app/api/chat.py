@@ -1,4 +1,5 @@
 import json
+import logging
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -12,6 +13,13 @@ from app.models.client import Client
 from app.models.conversation import Conversation, Message
 from app.schemas.chat import ChatDoneEvent, ChatRequest, WidgetConfigResponse
 from app.services.gemini import gemini_service
+from app.utils.sanitize import sanitize_message, sanitize_session_id
+
+logger = logging.getLogger(__name__)
+
+# Cap conversation history sent to Gemini to control cost and context window usage.
+# 50 messages ≈ 25 back-and-forth exchanges — enough context for most conversations.
+MAX_HISTORY_MESSAGES = 50
 
 router = APIRouter()
 
@@ -20,10 +28,6 @@ router = APIRouter()
 async def get_widget_config(
     client: Client = Depends(get_client_from_api_key),
 ) -> WidgetConfigResponse:
-    """
-    Returns widget display config. Called once when the widget loads.
-    Intentionally does NOT return the system_prompt — that stays server-side.
-    """
     return WidgetConfigResponse(
         welcome_message=client.welcome_message,
         theme_color=client.theme_color,
@@ -36,21 +40,23 @@ async def chat(
     client: Client = Depends(get_client_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Send a message and receive a streamed AI response.
+    # Sanitize inputs
+    clean_message = sanitize_message(request.message)
+    clean_session_id = sanitize_session_id(request.session_id)
 
-    The response is an SSE stream with these event types:
-    - "token": a chunk of the AI's response text
-    - "done": the response is complete (includes message ID and token count)
-    - "error": something went wrong
-    """
-    # 1. Find or create the conversation for the session
+    if not clean_message:
+        return StreamingResponse(
+            iter([f'event: error\ndata: {json.dumps({"code": "invalid_input", "message": "Message is empty"})}\n\n']),
+            media_type="text/event-stream",
+        )
+
+    # 1. Find or create conversation
     result = await db.execute(
         select(Conversation)
         .options(selectinload(Conversation.messages))
         .where(
             Conversation.client_id == client.id,
-            Conversation.session_id == request.session_id,
+            Conversation.session_id == clean_session_id,
         )
     )
     conversation = result.scalar_one_or_none()
@@ -58,21 +64,21 @@ async def chat(
     if conversation is None:
         conversation = Conversation(
             client_id=client.id,
-            session_id=request.session_id,
+            session_id=clean_session_id,
         )
         db.add(conversation)
-        await db.flush()  # Get the ID without committing
+        await db.flush()
 
-    # 2. Save the user's message
+    # 2. Save user message
     user_message = Message(
         conversation_id=conversation.id,
         role="user",
-        content=request.message,
+        content=clean_message,
     )
     db.add(user_message)
     await db.commit()
 
-    # Reload conversation with all messages
+    # Reload with messages
     result = await db.execute(
         select(Conversation)
         .options(selectinload(Conversation.messages))
@@ -80,15 +86,25 @@ async def chat(
     )
     conversation = result.scalar_one()
 
-    # 3. Build message history for Gemini
-    # We send the full conversation so Gemini can understand context
-    # (e.g., "what about the second one?" only makes sense with prior messages)
+    # 3. Build message history (capped to prevent runaway costs)
+    sorted_messages = sorted(conversation.messages, key=lambda m: m.created_at)
+    recent_messages = sorted_messages[-MAX_HISTORY_MESSAGES:]
     messages = [
         {"role": msg.role, "content": msg.content}
-        for msg in sorted(conversation.messages, key=lambda m: m.created_at)
+        for msg in recent_messages
     ]
 
-    # 4. Stream the response
+    logger.info(
+        "chat_request",
+        extra={
+            "client_id": client.id,
+            "client_slug": client.slug,
+            "session_id": clean_session_id,
+            "message_count": len(messages),
+        },
+    )
+
+    # 4. Stream response
     async def event_stream():
         full_response = ""
         try:
@@ -99,10 +115,9 @@ async def chat(
                 max_tokens=client.max_tokens,
             ):
                 full_response += chunk
-                # SSE format: "event: <type>\ndata: <json>\n\n"
                 yield f"event: token\ndata: {json.dumps({'content': chunk})}\n\n"
 
-            # Save the assistant's response to the database
+            # Save assistant response
             assistant_message = Message(
                 conversation_id=conversation.id,
                 role="assistant",
@@ -112,22 +127,51 @@ async def chat(
             await db.commit()
             await db.refresh(assistant_message)
 
-            # Send the "done" event with metadata
             done_data = ChatDoneEvent(
                 conversation_id=conversation.id,
                 message_id=assistant_message.id,
             )
             yield f"event: done\ndata: {done_data.model_dump_json()}\n\n"
 
+            logger.info(
+                "chat_response",
+                extra={
+                    "client_id": client.id,
+                    "conversation_id": conversation.id,
+                    "response_length": len(full_response),
+                },
+            )
+
+        except RuntimeError as e:
+            # Gemini API key not configured
+            logger.error("gemini_config_error", extra={"error": str(e)})
+            yield f'event: error\ndata: {json.dumps({"code": "service_unavailable", "message": "AI service is not configured"})}\n\n'
+
         except Exception as e:
-            error_data = {"code": "internal_error", "message": str(e)}
-            yield f"event: error\ndata: {json.dumps(error_data)}\n\n"
+            error_name = type(e).__name__
+            logger.error(
+                "gemini_stream_error",
+                extra={"error": str(e), "error_type": error_name, "client_id": client.id},
+            )
+
+            # User-friendly messages based on error type
+            if "quota" in str(e).lower() or "429" in str(e):
+                user_message = "AI service is temporarily busy. Please try again in a moment."
+                code = "quota_exceeded"
+            elif "timeout" in str(e).lower():
+                user_message = "Response timed out. Please try a shorter message."
+                code = "timeout"
+            else:
+                user_message = "Something went wrong. Please try again."
+                code = "internal_error"
+
+            yield f'event: error\ndata: {json.dumps({"code": code, "message": user_message})}\n\n'
 
     return StreamingResponse(
         event_stream(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",  # Tells nginx not to buffer the stream
+            "X-Accel-Buffering": "no",
         },
     )

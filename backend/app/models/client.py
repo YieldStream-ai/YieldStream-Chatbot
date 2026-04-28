@@ -41,6 +41,9 @@ class Client(Base):
     )
     theme_color: Mapped[str] = mapped_column(String(7), default="#4F46E5")
 
+    # Full widget styling as JSON — design tokens for colors, typography, shape, layout, motion
+    widget_styling: Mapped[str] = mapped_column(Text, default="{}")
+
     # Max tokens per AI response — caps cost and response length
     max_tokens: Mapped[int] = mapped_column(Integer, default=1024)
 

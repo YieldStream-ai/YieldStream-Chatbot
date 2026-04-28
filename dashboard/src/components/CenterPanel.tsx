@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../hooks/useApi";
-import type { Client, APIKey, APIKeyCreateResponse } from "../types";
+import type { Client, APIKey, APIKeyCreateResponse, WidgetStyling } from "../types";
+import { DEFAULT_WIDGET_STYLING } from "../types";
 import PromptTab from "./PromptTab";
 import WidgetTab from "./WidgetTab";
 import ApiKeysTab from "./ApiKeysTab";
@@ -14,12 +15,14 @@ interface Props {
   clientId: string;
   onClientDeleted: () => void;
   onClientUpdated: () => void;
+  onStylingChange?: (styling: WidgetStyling) => void;
 }
 
 export default function CenterPanel({
   clientId,
   onClientDeleted,
   onClientUpdated,
+  onStylingChange,
 }: Props) {
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
@@ -31,16 +34,33 @@ export default function CenterPanel({
 
   const [systemPrompt, setSystemPrompt] = useState("");
   const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [themeColor, setThemeColor] = useState("#ea580c");
   const [allowedOrigins, setAllowedOrigins] = useState("");
   const [maxTokens, setMaxTokens] = useState(1024);
   const [modelName, setModelName] = useState("gemini-2.0-flash");
   const [isActive, setIsActive] = useState(true);
+  const [widgetStyling, setWidgetStyling] = useState<WidgetStyling>(DEFAULT_WIDGET_STYLING);
+  const [savedStyling, setSavedStyling] = useState<WidgetStyling>(DEFAULT_WIDGET_STYLING);
 
   useEffect(() => {
     loadClient();
     loadKeys();
   }, [clientId]);
+
+  // Notify parent of styling changes for live preview
+  useEffect(() => {
+    onStylingChange?.(widgetStyling);
+  }, [widgetStyling]);
+
+  function handleStylingChange(newStyling: WidgetStyling) {
+    setWidgetStyling({
+      ...newStyling,
+      template_modified: true,
+    });
+  }
+
+  function handleTemplateApply(styling: WidgetStyling) {
+    setWidgetStyling(styling);
+  }
 
   async function loadClient() {
     try {
@@ -48,11 +68,16 @@ export default function CenterPanel({
       setClient(data);
       setSystemPrompt(data.system_prompt);
       setWelcomeMessage(data.welcome_message);
-      setThemeColor(data.theme_color);
       setAllowedOrigins(data.allowed_origins);
       setMaxTokens(data.max_tokens);
       setModelName(data.model_name);
       setIsActive(data.is_active);
+
+      const styling = data.widget_styling
+        ? { ...DEFAULT_WIDGET_STYLING, ...data.widget_styling }
+        : DEFAULT_WIDGET_STYLING;
+      setWidgetStyling(styling);
+      setSavedStyling(styling);
     } catch {
       navigate("/");
     }
@@ -72,12 +97,14 @@ export default function CenterPanel({
       await api.patch(`/clients/${clientId}`, {
         system_prompt: systemPrompt,
         welcome_message: welcomeMessage,
-        theme_color: themeColor,
+        theme_color: widgetStyling.brand.primary_color,
         allowed_origins: allowedOrigins,
         max_tokens: maxTokens,
         model_name: modelName,
         is_active: isActive,
+        widget_styling: widgetStyling,
       });
+      setSavedStyling(widgetStyling);
       setMessage("Saved!");
       setTimeout(() => setMessage(""), 2000);
       loadClient();
@@ -124,11 +151,13 @@ export default function CenterPanel({
     );
   }
 
+  const hasUnsavedStyling = JSON.stringify(widgetStyling) !== JSON.stringify(savedStyling);
+
   const embedCode = `<script
   src="YOUR_CDN_URL/chat-widget.min.js"
   data-api-key="YOUR_API_KEY"
   data-api-url="${window.location.origin.replace("5173", "8000")}"
-  data-position="bottom-right"
+  data-position="${widgetStyling.layout.position}"
   async defer
 ><\/script>`;
 
@@ -158,6 +187,9 @@ export default function CenterPanel({
           </span>
         </div>
         <div className="center-header-right">
+          {hasUnsavedStyling && tab === "widget" && (
+            <span className="unsaved-indicator">Unsaved changes</span>
+          )}
           {message && (
             <span
               className={
@@ -204,9 +236,10 @@ export default function CenterPanel({
         <WidgetTab
           welcomeMessage={welcomeMessage}
           onWelcomeMessageChange={setWelcomeMessage}
-          themeColor={themeColor}
-          onThemeColorChange={setThemeColor}
           embedCode={embedCode}
+          widgetStyling={widgetStyling}
+          onStylingChange={handleStylingChange}
+          onTemplateApply={handleTemplateApply}
         />
       )}
 

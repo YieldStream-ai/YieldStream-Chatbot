@@ -12,6 +12,7 @@ from app.database import get_db
 from app.models.client import Client
 from app.models.conversation import Conversation, Message
 from app.schemas.chat import ChatDoneEvent, ChatRequest, WidgetConfigResponse
+from app.schemas.widget_styling import WidgetStyling
 from app.services.gemini import gemini_service
 from app.utils.sanitize import sanitize_message, sanitize_session_id
 
@@ -28,9 +29,11 @@ router = APIRouter()
 async def get_widget_config(
     client: Client = Depends(get_client_from_api_key),
 ) -> WidgetConfigResponse:
+    styling = WidgetStyling.from_dict_safe(client.widget_styling)
     return WidgetConfigResponse(
         welcome_message=client.welcome_message,
         theme_color=client.theme_color,
+        widget_styling=styling.model_dump(),
     )
 
 

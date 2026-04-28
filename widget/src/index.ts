@@ -26,12 +26,14 @@ import { WidgetConfig } from "./types";
     return;
   }
 
+  const validPositions = ["bottom-right", "bottom-left", "top-right", "top-left"];
+  const rawPosition = script.getAttribute("data-position") || "bottom-right";
+  const position = validPositions.includes(rawPosition) ? rawPosition : "bottom-right";
+
   const config: WidgetConfig = {
     apiKey,
     apiUrl: apiUrl.replace(/\/$/, ""), // Strip trailing slash
-    position:
-      (script.getAttribute("data-position") as WidgetConfig["position"]) ||
-      "bottom-right",
+    position: position as WidgetConfig["position"],
   };
 
   // Register the custom element (only once)

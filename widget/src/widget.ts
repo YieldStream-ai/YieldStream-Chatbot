@@ -3,7 +3,14 @@
  */
 import { ChatAPI } from "./api";
 import { getStyles } from "./styles";
-import { ChatMessage, WidgetConfig } from "./types";
+import { ChatMessage, WidgetConfig, WidgetStyling } from "./types";
+
+const SPEED_MAP: Record<string, string> = {
+  slow: "400ms",
+  normal: "250ms",
+  fast: "150ms",
+  instant: "0ms",
+};
 
 export class ChatWidget extends HTMLElement {
   private api: ChatAPI;
@@ -13,6 +20,7 @@ export class ChatWidget extends HTMLElement {
   private isOpen = false;
   private isStreaming = false;
   private configLoaded = false;
+  private loadedFontUrl: string | null = null;
 
   // DOM references (set in render())
   private panel!: HTMLDivElement;
@@ -33,6 +41,14 @@ export class ChatWidget extends HTMLElement {
     this.attachEventListeners();
   }
 
+  /**
+   * Public API for the dashboard live preview — push styling changes
+   * without re-fetching from the server.
+   */
+  public updateStyling(styling: WidgetStyling) {
+    this.applyTokens(styling);
+  }
+
   private render() {
     const position = this.config.position || "bottom-right";
 
@@ -47,7 +63,7 @@ export class ChatWidget extends HTMLElement {
       </button>
 
       <!-- Chat panel (hidden by default) -->
-      <div class="chat-panel ${position}">
+      <div class="chat-panel ${position}" data-animation="slide">
         <div class="chat-header">
           <span class="chat-header-title">Chat</span>
           <button class="chat-close-btn" aria-label="Close chat">
@@ -143,11 +159,15 @@ export class ChatWidget extends HTMLElement {
         const serverConfig = await this.api.fetchConfig();
         this.configLoaded = true;
 
-        // Apply theme color from server
-        this.style.setProperty(
-          "--chat-primary-color",
-          serverConfig.theme_color,
-        );
+        // Apply full styling if available, otherwise fall back to theme_color only
+        if (serverConfig.widget_styling) {
+          this.applyTokens(serverConfig.widget_styling);
+        } else {
+          this.style.setProperty(
+            "--chat-primary-color",
+            serverConfig.theme_color,
+          );
+        }
 
         // Show welcome message
         if (serverConfig.welcome_message) {
@@ -169,6 +189,79 @@ export class ChatWidget extends HTMLElement {
   private close() {
     this.isOpen = false;
     this.panel.classList.remove("open");
+  }
+
+  private applyTokens(styling: WidgetStyling) {
+    const s = this.style;
+
+    // Brand
+    s.setProperty("--chat-primary-color", styling.brand.primary_color);
+    s.setProperty("--chat-primary-text", styling.brand.primary_text_color);
+    s.setProperty("--chat-bg", styling.brand.background_color);
+    s.setProperty("--chat-surface", styling.brand.surface_color);
+    s.setProperty("--chat-text", styling.brand.text_color);
+    s.setProperty("--chat-text-muted", styling.brand.text_muted_color);
+
+    // Typography
+    s.setProperty("--chat-font-family", styling.typography.font_family);
+    s.setProperty("--chat-font-size", styling.typography.font_size_base + "px");
+    s.setProperty("--chat-font-weight-body", String(styling.typography.font_weight_body));
+    s.setProperty("--chat-font-weight-heading", String(styling.typography.font_weight_heading));
+
+    // Shape
+    s.setProperty("--chat-radius-panel", styling.shape.border_radius_panel + "px");
+    s.setProperty("--chat-radius-bubble", styling.shape.border_radius_bubble + "px");
+    s.setProperty("--chat-radius-message", styling.shape.border_radius_message + "px");
+    s.setProperty("--chat-border-width", styling.shape.border_width + "px");
+
+    // Layout
+    s.setProperty("--chat-offset-x", styling.layout.offset_x + "px");
+    s.setProperty("--chat-offset-y", styling.layout.offset_y + "px");
+    s.setProperty("--chat-bubble-size", styling.layout.bubble_size + "px");
+    s.setProperty("--chat-panel-width", styling.layout.panel_width + "px");
+    s.setProperty("--chat-panel-height", styling.layout.panel_height + "px");
+
+    // Motion
+    const duration = SPEED_MAP[styling.motion.animation_speed] || "250ms";
+    s.setProperty("--chat-animation-duration", duration);
+    this.panel.setAttribute("data-animation", styling.motion.animation_style);
+
+    // Reduced motion
+    this.setAttribute(
+      "data-respect-reduced-motion",
+      String(styling.motion.respect_reduced_motion),
+    );
+
+    // Update position classes
+    const bubble = this.shadow.querySelector(".chat-bubble") as HTMLElement;
+    if (bubble) {
+      bubble.className = `chat-bubble ${styling.layout.position}`;
+    }
+    this.panel.className = this.panel.className.replace(
+      /\b(bottom-right|bottom-left|top-right|top-left)\b/,
+      styling.layout.position,
+    );
+
+    // Load Google Font if needed
+    if (styling.typography.font_url) {
+      this.loadFont(styling.typography.font_url);
+    }
+  }
+
+  private loadFont(url: string) {
+    if (this.loadedFontUrl === url) return;
+    this.loadedFontUrl = url;
+
+    // Try shadow DOM first, fall back to document head
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = url;
+
+    // Insert into document head (fonts must be accessible globally for shadow DOM to use them)
+    const existing = document.querySelector(`link[href="${url}"]`);
+    if (!existing) {
+      document.head.appendChild(link);
+    }
   }
 
   private async sendMessage() {
@@ -237,10 +330,10 @@ export class ChatWidget extends HTMLElement {
           assistantElement = this.addMessageToDOM({
             id: "error",
             role: "assistant",
-            content: `⚠️ ${error}`,
+            content: `\u26a0\ufe0f ${error}`,
           });
         } else {
-          assistantMsg.content += `\n\n⚠️ ${error}`;
+          assistantMsg.content += `\n\n\u26a0\ufe0f ${error}`;
           assistantElement.textContent = assistantMsg.content;
         }
         this.scrollToBottom();

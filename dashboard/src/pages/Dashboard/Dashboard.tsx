@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, clearToken } from "../../hooks/useApi";
-import type { Client } from "../../types";
+import type { Client, WidgetStyling } from "../../types";
+import { DEFAULT_WIDGET_STYLING } from "../../types";
 import LeftRail from "../../components/LeftRail";
 import CenterPanel from "../../components/CenterPanel";
 import RightRail from "../../components/RightRail";
@@ -18,6 +19,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [activeApiKey, setActiveApiKey] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [previewStyling, setPreviewStyling] = useState<WidgetStyling>(DEFAULT_WIDGET_STYLING);
+  const [previewWelcome, setPreviewWelcome] = useState("");
 
   useEffect(() => {
     loadClients();
@@ -32,10 +35,16 @@ export default function Dashboard() {
   useEffect(() => {
     if (id) {
       loadFirstApiKey(id);
+      // Initialize preview from selected client
+      const client = clients.find((c) => c.id === id);
+      if (client) {
+        setPreviewStyling(client.widget_styling || DEFAULT_WIDGET_STYLING);
+        setPreviewWelcome(client.welcome_message);
+      }
     } else {
       setActiveApiKey(null);
     }
-  }, [id]);
+  }, [id, clients]);
 
   async function loadClients() {
     try {
@@ -96,11 +105,14 @@ export default function Dashboard() {
             clientId={id}
             onClientDeleted={handleClientDeleted}
             onClientUpdated={loadClients}
+            onStylingChange={setPreviewStyling}
           />
           <RightRail
             client={selectedClient}
             apiKey={activeApiKey || undefined}
             apiUrl={API_URL}
+            previewStyling={previewStyling}
+            previewWelcome={previewWelcome}
           />
         </>
       ) : null}

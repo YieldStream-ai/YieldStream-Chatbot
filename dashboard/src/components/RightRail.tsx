@@ -1,15 +1,19 @@
 import { useState, useRef } from "react";
-import type { Client } from "../types";
+import type { Client, WidgetStyling } from "../types";
+import { DEFAULT_WIDGET_STYLING } from "../types";
 import { mockStats, mockRecentMessages } from "../mockData";
+import WidgetPreview from "./WidgetPreview";
 import "./RightRail.css";
 
 interface Props {
   client: Client | null;
   apiKey?: string;
   apiUrl?: string;
+  previewStyling?: WidgetStyling;
+  previewWelcome?: string;
 }
 
-export default function RightRail({ client, apiKey, apiUrl }: Props) {
+export default function RightRail({ client, apiKey, apiUrl, previewStyling, previewWelcome }: Props) {
   const [previewInput, setPreviewInput] = useState("");
   const [previewMessages, setPreviewMessages] = useState<
     { role: "bot" | "user"; text: string }[]
@@ -99,16 +103,26 @@ export default function RightRail({ client, apiKey, apiUrl }: Props) {
   }
 
   const hasApiKey = !!apiKey;
+  const styling = previewStyling || client.widget_styling || DEFAULT_WIDGET_STYLING;
+  const welcome = previewWelcome || client.welcome_message || "Hi! How can I help?";
 
   return (
     <div className="right-rail">
-      {/* Live Preview */}
+      {/* Live Widget Preview */}
       <div className="card right-card">
-        <div className="card-title">LIVE PREVIEW</div>
+        <div className="card-title">WIDGET PREVIEW</div>
+        <WidgetPreview styling={styling} welcomeMessage={welcome} />
+      </div>
+
+      {/* Chat Test */}
+      <div className="card right-card">
+        <div className="card-title">LIVE TEST</div>
         <div className="preview-widget">
-          <div className="preview-bot-bubble">
-            {client.welcome_message || "Hi! How can I help?"}
-          </div>
+          {previewMessages.length === 0 && (
+            <div className="preview-bot-bubble">
+              {welcome}
+            </div>
+          )}
 
           {previewMessages.map((msg, i) => (
             <div

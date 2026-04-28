@@ -13,6 +13,7 @@ class ChatRequest(BaseModel):
 class WidgetConfigResponse(BaseModel):
     welcome_message: str
     theme_color: str
+    widget_styling: dict = Field(default_factory=dict)
 
 
 class ChatDoneEvent(BaseModel):

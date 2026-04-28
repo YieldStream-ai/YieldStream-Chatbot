@@ -1,4 +1,8 @@
-from pydantic import BaseModel, Field
+import json
+
+from pydantic import BaseModel, Field, model_validator
+
+from app.schemas.widget_styling import WidgetStyling
 
 
 class ClientCreate(BaseModel):
@@ -10,6 +14,7 @@ class ClientCreate(BaseModel):
     allowed_origins: str = ""
     max_tokens: int = Field(default=1024, ge=1, le=8192)
     model_name: str = "gemini-2.0-flash"
+    widget_styling: WidgetStyling | None = None
 
 
 class ClientUpdate(BaseModel):
@@ -21,6 +26,7 @@ class ClientUpdate(BaseModel):
     max_tokens: int | None = Field(default=None, ge=1, le=8192)
     model_name: str | None = None
     is_active: bool | None = None
+    widget_styling: WidgetStyling | None = None
 
 
 class ClientResponse(BaseModel):
@@ -34,8 +40,36 @@ class ClientResponse(BaseModel):
     max_tokens: int
     model_name: str
     is_active: bool
+    widget_styling: dict = Field(default_factory=dict)
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_widget_styling(cls, data):
+        """Parse widget_styling from JSON string (DB) into dict for API response."""
+        if hasattr(data, "widget_styling"):
+            raw = data.widget_styling
+        elif isinstance(data, dict):
+            raw = data.get("widget_styling", "{}")
+        else:
+            return data
+
+        if isinstance(raw, str):
+            try:
+                styling = WidgetStyling.from_json(raw)
+            except Exception:
+                styling = WidgetStyling()
+            if isinstance(data, dict):
+                data["widget_styling"] = styling.model_dump()
+            else:
+                # For ORM models, we need to handle via __dict__ copy
+                data_dict = {}
+                for field_name in cls.model_fields:
+                    data_dict[field_name] = getattr(data, field_name, None)
+                data_dict["widget_styling"] = styling.model_dump()
+                return data_dict
+        return data
 
 
 class APIKeyResponse(BaseModel):

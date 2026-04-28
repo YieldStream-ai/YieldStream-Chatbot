@@ -37,7 +37,16 @@ async def create_client(data: ClientCreate, db: AsyncSession = Depends(get_db)):
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Slug already exists")
 
-    client = Client(**data.model_dump())
+    client_data = data.model_dump()
+    if client_data.get("widget_styling") is not None:
+        from app.schemas.widget_styling import WidgetStyling
+        styling = WidgetStyling.model_validate(client_data["widget_styling"])
+        client_data["widget_styling"] = styling.to_json()
+        client_data["theme_color"] = styling.brand.primary_color
+    else:
+        client_data.pop("widget_styling", None)
+
+    client = Client(**client_data)
     db.add(client)
     await db.commit()
     await db.refresh(client)
@@ -64,7 +73,14 @@ async def update_client(
 
     # Only update fields that were explicitly provided
     for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(client, field, value)
+        if field == "widget_styling" and value is not None:
+            from app.schemas.widget_styling import WidgetStyling
+            styling = WidgetStyling.model_validate(value)
+            setattr(client, field, styling.to_json())
+            # Keep theme_color in sync for backward compatibility
+            client.theme_color = styling.brand.primary_color
+        else:
+            setattr(client, field, value)
 
     await db.commit()
     await db.refresh(client)

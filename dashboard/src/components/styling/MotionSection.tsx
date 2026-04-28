@@ -4,15 +4,16 @@ import StyleSection, { SegmentedField, ToggleField } from "./StyleSection";
 interface Props {
   motion: MotionTokens;
   onChange: (motion: MotionTokens) => void;
+  modifiedCount?: number;
 }
 
-export default function MotionSection({ motion, onChange }: Props) {
+export default function MotionSection({ motion, onChange, modifiedCount }: Props) {
   function set<K extends keyof MotionTokens>(key: K, value: MotionTokens[K]) {
     onChange({ ...motion, [key]: value });
   }
 
   return (
-    <StyleSection title="Motion">
+    <StyleSection title="Motion" modifiedCount={modifiedCount}>
       <SegmentedField
         label="Animation Style"
         value={motion.animation_style}

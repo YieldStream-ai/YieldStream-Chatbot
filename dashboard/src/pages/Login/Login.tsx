@@ -32,7 +32,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <form onSubmit={handleSubmit} className="login-form">
-        <h1 className="login-title">Chat Widget Dashboard</h1>
+        <h1 className="login-title">BubbleChat Dashboard</h1>
 
         {error && <div className="login-error">{error}</div>}
 

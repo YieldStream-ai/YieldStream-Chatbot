@@ -9,13 +9,14 @@ import ApiKeysTab from "./ApiKeysTab";
 import LimitsTab from "./LimitsTab";
 import "./CenterPanel.css";
 
-type Tab = "prompt" | "widget" | "keys" | "limits";
+export type Tab = "prompt" | "widget" | "keys" | "limits";
 
 interface Props {
   clientId: string;
   onClientDeleted: () => void;
   onClientUpdated: () => void;
   onStylingChange?: (styling: WidgetStyling) => void;
+  onTabChange?: (tab: Tab) => void;
 }
 
 export default function CenterPanel({
@@ -23,6 +24,7 @@ export default function CenterPanel({
   onClientDeleted,
   onClientUpdated,
   onStylingChange,
+  onTabChange,
 }: Props) {
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
@@ -154,7 +156,7 @@ export default function CenterPanel({
   const hasUnsavedStyling = JSON.stringify(widgetStyling) !== JSON.stringify(savedStyling);
 
   const embedCode = `<script
-  src="YOUR_CDN_URL/chat-widget.min.js"
+  src="YOUR_CDN_URL/bubblechat.min.js"
   data-api-key="YOUR_API_KEY"
   data-api-url="${window.location.origin.replace("5173", "8000")}"
   data-position="${widgetStyling.layout.position}"
@@ -188,7 +190,7 @@ export default function CenterPanel({
         </div>
         <div className="center-header-right">
           {hasUnsavedStyling && tab === "widget" && (
-            <span className="unsaved-indicator">Unsaved changes</span>
+            <span className="unsaved-indicator"><span className="unsaved-dot" />Unsaved changes</span>
           )}
           {message && (
             <span
@@ -213,7 +215,7 @@ export default function CenterPanel({
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); onTabChange?.(t.key); }}
             className={`center-tab ${tab === t.key ? "active" : ""}`}
           >
             {t.label}
@@ -238,6 +240,7 @@ export default function CenterPanel({
           onWelcomeMessageChange={setWelcomeMessage}
           embedCode={embedCode}
           widgetStyling={widgetStyling}
+          savedStyling={savedStyling}
           onStylingChange={handleStylingChange}
           onTemplateApply={handleTemplateApply}
         />

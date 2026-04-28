@@ -4,15 +4,16 @@ import StyleSection, { SliderField, SegmentedField } from "./StyleSection";
 interface Props {
   layout: LayoutTokens;
   onChange: (layout: LayoutTokens) => void;
+  modifiedCount?: number;
 }
 
-export default function LayoutSection({ layout, onChange }: Props) {
+export default function LayoutSection({ layout, onChange, modifiedCount }: Props) {
   function set<K extends keyof LayoutTokens>(key: K, value: LayoutTokens[K]) {
     onChange({ ...layout, [key]: value });
   }
 
   return (
-    <StyleSection title="Layout">
+    <StyleSection title="Layout" modifiedCount={modifiedCount}>
       <SegmentedField
         label="Position"
         value={layout.position}

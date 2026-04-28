@@ -4,6 +4,7 @@ import StyleSection, { SliderField, SegmentedField } from "./StyleSection";
 interface Props {
   typography: TypographyTokens;
   onChange: (typography: TypographyTokens) => void;
+  modifiedCount?: number;
 }
 
 const FONT_PRESETS: { value: string; label: string; url?: string }[] = [
@@ -16,7 +17,7 @@ const FONT_PRESETS: { value: string; label: string; url?: string }[] = [
   { value: "'IBM Plex Sans', system-ui, sans-serif", label: "IBM Plex", url: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" },
 ];
 
-export default function TypographySection({ typography, onChange }: Props) {
+export default function TypographySection({ typography, onChange, modifiedCount }: Props) {
   function set<K extends keyof TypographyTokens>(key: K, value: TypographyTokens[K]) {
     onChange({ ...typography, [key]: value });
   }
@@ -24,7 +25,7 @@ export default function TypographySection({ typography, onChange }: Props) {
   const currentPreset = FONT_PRESETS.find((p) => p.value === typography.font_family);
 
   return (
-    <StyleSection title="Typography">
+    <StyleSection title="Typography" modifiedCount={modifiedCount}>
       <label className="label">
         Font Family
         <select

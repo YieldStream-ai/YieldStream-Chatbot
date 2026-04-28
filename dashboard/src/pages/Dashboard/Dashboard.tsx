@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, clearToken } from "../../hooks/useApi";
 import type { Client, WidgetStyling } from "../../types";
+import type { Tab } from "../../components/CenterPanel";
 import { DEFAULT_WIDGET_STYLING } from "../../types";
 import LeftRail from "../../components/LeftRail";
 import CenterPanel from "../../components/CenterPanel";
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [previewStyling, setPreviewStyling] = useState<WidgetStyling>(DEFAULT_WIDGET_STYLING);
   const [previewWelcome, setPreviewWelcome] = useState("");
+  const [activeTab, setActiveTab] = useState<Tab>("prompt");
 
   useEffect(() => {
     loadClients();
@@ -106,6 +108,7 @@ export default function Dashboard() {
             onClientDeleted={handleClientDeleted}
             onClientUpdated={loadClients}
             onStylingChange={setPreviewStyling}
+            onTabChange={setActiveTab}
           />
           <RightRail
             client={selectedClient}
@@ -113,6 +116,7 @@ export default function Dashboard() {
             apiUrl={API_URL}
             previewStyling={previewStyling}
             previewWelcome={previewWelcome}
+            activeTab={activeTab}
           />
         </>
       ) : null}

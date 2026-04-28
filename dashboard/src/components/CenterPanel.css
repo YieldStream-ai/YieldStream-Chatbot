@@ -176,22 +176,37 @@
 
 /* --- Widget tab --- */
 
+.brand-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.brand-grid .label {
+  font-size: 12px;
+}
+
 .color-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .color-picker {
-  width: 48px;
-  height: 36px;
+  width: 32px;
+  height: 28px;
   border: none;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .color-text {
-  width: 100px;
+  width: 80px;
+  font-size: 12px;
+}
+
+.embed-code-wrapper {
+  position: relative;
 }
 
 .embed-code {
@@ -200,6 +215,25 @@
   font-size: 12px;
   background: #f9fafb;
   resize: vertical;
+}
+
+.btn-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #374151;
+  transition: background 0.15s;
+}
+
+.btn-copy:hover {
+  background: #f3f4f6;
 }
 
 /* --- Styling sections --- */
@@ -237,6 +271,12 @@
 
 .style-section-chevron {
   font-size: 10px;
+  color: #9ca3af;
+}
+
+.section-modified-count {
+  font-weight: 400;
+  font-size: 12px;
   color: #9ca3af;
 }
 
@@ -346,8 +386,19 @@
 /* Unsaved indicator */
 .unsaved-indicator {
   font-size: 12px;
-  color: #d97706;
+  color: #92400e;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.unsaved-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+  margin-right: 6px;
 }
 
 /* Template selector */
@@ -379,12 +430,28 @@
   box-shadow: 0 0 0 1px #374151;
 }
 
-.template-swatch {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+.template-mini-preview {
+  width: 60px;
+  height: 36px;
   margin: 0 auto 8px;
-  border: 2px solid rgba(0,0,0,0.1);
+  padding: 5px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.tmpl-pill-bot {
+  width: 70%;
+  height: 6px;
+  align-self: flex-start;
+}
+
+.tmpl-pill-user {
+  width: 50%;
+  height: 6px;
+  align-self: flex-end;
 }
 
 .template-name {

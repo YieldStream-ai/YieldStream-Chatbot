@@ -11,9 +11,10 @@ interface Props {
   apiUrl?: string;
   previewStyling?: WidgetStyling;
   previewWelcome?: string;
+  activeTab?: string;
 }
 
-export default function RightRail({ client, apiKey, apiUrl, previewStyling, previewWelcome }: Props) {
+export default function RightRail({ client, apiKey, apiUrl, previewStyling, previewWelcome, activeTab }: Props) {
   const [previewInput, setPreviewInput] = useState("");
   const [previewMessages, setPreviewMessages] = useState<
     { role: "bot" | "user"; text: string }[]
@@ -106,13 +107,19 @@ export default function RightRail({ client, apiKey, apiUrl, previewStyling, prev
   const styling = previewStyling || client.widget_styling || DEFAULT_WIDGET_STYLING;
   const welcome = previewWelcome || client.welcome_message || "Hi! How can I help?";
 
+  const showPreview = activeTab === "widget" || activeTab === "prompt" || !activeTab;
+  const showStats = activeTab !== "widget";
+  const previewLarge = activeTab === "widget";
+
   return (
     <div className="right-rail">
       {/* Live Widget Preview */}
-      <div className="card right-card">
-        <div className="card-title">WIDGET PREVIEW</div>
-        <WidgetPreview styling={styling} welcomeMessage={welcome} />
-      </div>
+      {showPreview && (
+        <div className="card right-card">
+          <div className="card-title">WIDGET PREVIEW</div>
+          <WidgetPreview styling={styling} welcomeMessage={welcome} large={previewLarge} />
+        </div>
+      )}
 
       {/* Chat Test */}
       <div className="card right-card">
@@ -165,45 +172,49 @@ export default function RightRail({ client, apiKey, apiUrl, previewStyling, prev
       </div>
 
       {/* Today's Stats */}
-      <div className="card right-card">
-        <div className="card-title">TODAY</div>
-        <div className="stats-grid">
-          <div className="stat-item">
-            <span className="stat-value">{mockStats.messages}</span>
-            <span className="stat-label">Messages</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">
-              {mockStats.tokens >= 1000
-                ? `${Math.round(mockStats.tokens / 1000)}k`
-                : mockStats.tokens}
-            </span>
-            <span className="stat-label">Tokens</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{mockStats.sessions}</span>
-            <span className="stat-label">Sessions</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value stat-uptime">{mockStats.uptime}%</span>
-            <span className="stat-label">Uptime</span>
+      {showStats && (
+        <div className="card right-card">
+          <div className="card-title">TODAY</div>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <span className="stat-value">{mockStats.messages}</span>
+              <span className="stat-label">Messages</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">
+                {mockStats.tokens >= 1000
+                  ? `${Math.round(mockStats.tokens / 1000)}k`
+                  : mockStats.tokens}
+              </span>
+              <span className="stat-label">Tokens</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{mockStats.sessions}</span>
+              <span className="stat-label">Sessions</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value stat-uptime">{mockStats.uptime}%</span>
+              <span className="stat-label">Uptime</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Recent Messages */}
-      <div className="card right-card">
-        <div className="card-title">RECENT</div>
-        <div className="recent-list">
-          {mockRecentMessages.map((msg, i) => (
-            <button key={i} className="recent-item" title="View full thread">
-              <span className="recent-time">{msg.timestamp}</span>
-              <span className="recent-sep">&middot;</span>
-              <span className="recent-text">&ldquo;{msg.text}&rdquo;</span>
-            </button>
-          ))}
+      {showStats && (
+        <div className="card right-card">
+          <div className="card-title">RECENT</div>
+          <div className="recent-list">
+            {mockRecentMessages.map((msg, i) => (
+              <button key={i} className="recent-item" title="View full thread">
+                <span className="recent-time">{msg.timestamp}</span>
+                <span className="recent-sep">&middot;</span>
+                <span className="recent-text">&ldquo;{msg.text}&rdquo;</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

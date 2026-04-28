@@ -1,5 +1,5 @@
 .right-rail {
-  width: 300px;
+  width: 420px;
   flex-shrink: 0;
   border-left: 1px solid #e5e7eb;
   background: #f9fafb;
@@ -125,21 +125,28 @@
 .widget-preview-container {
   position: relative;
   width: 100%;
-  height: 360px;
+  height: 420px;
   overflow: hidden;
   border-radius: 8px;
-  background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 16px 16px;
+  background: #f0f1f3;
   border: 1px solid #e5e7eb;
 }
 
-.widget-preview-container chat-widget-preview {
+.widget-preview-container.preview-large {
+  height: 460px;
+}
+
+.widget-preview-container .wp-root {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  transform: scale(0.55);
-  transform-origin: bottom right;
-  width: 182%;
-  height: 182%;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 520px;
+  transform: translate(-50%, -50%) scale(0.75);
+}
+
+.widget-preview-container.preview-large .wp-root {
+  transform: translate(-50%, -50%) scale(0.82);
 }
 
 /* --- Stats --- */

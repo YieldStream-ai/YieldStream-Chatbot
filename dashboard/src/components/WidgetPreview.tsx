@@ -49,10 +49,15 @@ const WIDGET_CSS = `
     width: 100%;
     height: 100%;
   }
+  .wp-mode-panel .wp-bubble {
+    display: none;
+  }
+  .wp-mode-bubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   .wp-bubble {
-    position: absolute;
-    bottom: var(--chat-offset-y);
-    right: var(--chat-offset-x);
     width: var(--chat-bubble-size);
     height: var(--chat-bubble-size);
     border-radius: var(--chat-radius-bubble);
@@ -68,10 +73,10 @@ const WIDGET_CSS = `
   .wp-bubble svg { width: 24px; height: 24px; fill: currentColor; }
   .wp-panel {
     position: absolute;
-    bottom: calc(var(--chat-offset-y) + var(--chat-bubble-size) + 12px);
-    right: var(--chat-offset-x);
-    width: var(--chat-panel-width);
-    height: var(--chat-panel-height);
+    top: 0;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
     background: var(--chat-bg);
     border-radius: var(--chat-radius-panel);
     box-shadow: 0 8px 30px rgba(0,0,0,0.12);
@@ -137,7 +142,7 @@ const WIDGET_CSS = `
     border-radius: 8px;
     font-family: inherit;
     font-size: var(--chat-font-size);
-    color: var(--chat-text);
+    color: var(--chat-text-muted);
     background: var(--chat-bg);
     outline: none;
   }
@@ -166,9 +171,10 @@ const WIDGET_CSS = `
 interface Props {
   styling: WidgetStyling;
   welcomeMessage: string;
+  large?: boolean;
 }
 
-export default function WidgetPreview({ styling, welcomeMessage }: Props) {
+export default function WidgetPreview({ styling, welcomeMessage, large }: Props) {
   const [showPanel, setShowPanel] = useState(true);
   const [debouncedStyling, setDebouncedStyling] = useState(styling);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -217,9 +223,9 @@ export default function WidgetPreview({ styling, welcomeMessage }: Props) {
           Bubble
         </button>
       </div>
-      <div className="widget-preview-container" style={cssVars as React.CSSProperties}>
+      <div className={`widget-preview-container${large ? " preview-large" : ""}`} style={cssVars as React.CSSProperties}>
         <style>{WIDGET_CSS}</style>
-        <div className="wp-root">
+        <div className={`wp-root ${showPanel ? "wp-mode-panel" : "wp-mode-bubble"}`}>
           {/* Bubble */}
           <div className="wp-bubble">
             <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
@@ -245,7 +251,7 @@ export default function WidgetPreview({ styling, welcomeMessage }: Props) {
                   <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                 </div>
               </div>
-              <div className="wp-footer">Powered by Chat Widget</div>
+              <div className="wp-footer">Powered by BubbleChat</div>
             </div>
           )}
         </div>

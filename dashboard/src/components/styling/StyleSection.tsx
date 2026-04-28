@@ -3,10 +3,11 @@ import { useState, type ReactNode } from "react";
 interface Props {
   title: string;
   defaultOpen?: boolean;
+  modifiedCount?: number;
   children: ReactNode;
 }
 
-export default function StyleSection({ title, defaultOpen = false, children }: Props) {
+export default function StyleSection({ title, defaultOpen = false, modifiedCount, children }: Props) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -16,7 +17,10 @@ export default function StyleSection({ title, defaultOpen = false, children }: P
         onClick={() => setOpen(!open)}
         type="button"
       >
-        <span>{title}</span>
+        <span>
+          {title}
+          {modifiedCount ? <span className="section-modified-count"> &middot; {modifiedCount} modified</span> : null}
+        </span>
         <span className="style-section-chevron">{open ? "\u25B2" : "\u25BC"}</span>
       </button>
       {open && <div className="style-section-body">{children}</div>}

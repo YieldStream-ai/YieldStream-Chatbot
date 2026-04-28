@@ -35,7 +35,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: admin
-      DASHBOARD_ORIGIN: http://localhost:5173
+      DASHBOARD_ORIGIN: http://localhost:5174
       ENVIRONMENT: development
     depends_on:
       - db
@@ -45,7 +45,7 @@ services:
       context: .
       dockerfile: infra/Dockerfile.dashboard
     ports:
-      - "5173:80"
+      - "5174:80"
 
 volumes:
   pgdata:

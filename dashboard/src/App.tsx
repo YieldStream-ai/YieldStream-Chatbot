@@ -1,8 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { isAuthenticated } from "./hooks/useApi";
 import Login from "./pages/Login/Login";
-import Clients from "./pages/Clients/Clients";
-import ClientDetail from "./pages/ClientDetail/ClientDetail";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
@@ -20,7 +19,7 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Clients />
+              <Dashboard />
             </ProtectedRoute>
           }
         />
@@ -28,7 +27,7 @@ export default function App() {
           path="/clients/:id"
           element={
             <ProtectedRoute>
-              <ClientDetail />
+              <Dashboard />
             </ProtectedRoute>
           }
         />

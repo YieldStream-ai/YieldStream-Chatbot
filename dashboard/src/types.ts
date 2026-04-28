@@ -22,3 +22,15 @@ export interface APIKey {
 export interface APIKeyCreateResponse extends APIKey {
   raw_key: string;
 }
+
+export interface DashboardStats {
+  messages: number;
+  tokens: number;
+  sessions: number;
+  uptime: number;
+}
+
+export interface RecentMessage {
+  text: string;
+  timestamp: string;
+}

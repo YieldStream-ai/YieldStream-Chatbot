@@ -6,13 +6,18 @@ import LeftRail from "../../components/LeftRail";
 import CenterPanel from "../../components/CenterPanel";
 import RightRail from "../../components/RightRail";
 import EmptyState from "../../components/EmptyState";
+import CreateClientModal from "../../components/CreateClientModal";
 import "./Dashboard.css";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function Dashboard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeApiKey, setActiveApiKey] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadClients();
@@ -23,6 +28,14 @@ export default function Dashboard() {
       navigate(`/clients/${clients[0].id}`, { replace: true });
     }
   }, [loading, clients, id]);
+
+  useEffect(() => {
+    if (id) {
+      loadFirstApiKey(id);
+    } else {
+      setActiveApiKey(null);
+    }
+  }, [id]);
 
   async function loadClients() {
     try {
@@ -35,9 +48,14 @@ export default function Dashboard() {
     }
   }
 
+  async function loadFirstApiKey(_clientId: string) {
+    setActiveApiKey(null);
+  }
+
   async function handleCreateClient(name: string, slug: string) {
-    await api.post("/clients", { name, slug });
+    const created = await api.post<Client>("/clients", { name, slug });
     await loadClients();
+    navigate(`/clients/${created.id}`);
   }
 
   function handleLogout() {
@@ -65,7 +83,7 @@ export default function Dashboard() {
       <LeftRail
         clients={clients}
         selectedId={id}
-        onCreateClient={handleCreateClient}
+        onNewClient={() => setShowCreateModal(true)}
         onLogout={handleLogout}
       />
 
@@ -79,9 +97,20 @@ export default function Dashboard() {
             onClientDeleted={handleClientDeleted}
             onClientUpdated={loadClients}
           />
-          <RightRail client={selectedClient} />
+          <RightRail
+            client={selectedClient}
+            apiKey={activeApiKey || undefined}
+            apiUrl={API_URL}
+          />
         </>
       ) : null}
+
+      {showCreateModal && (
+        <CreateClientModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleCreateClient}
+        />
+      )}
     </div>
   );
 }

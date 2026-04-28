@@ -53,13 +53,14 @@
 }
 
 .left-rail-item:hover {
-  background: #f9fafb;
+  background: #f3f4f6;
 }
 
 .left-rail-item.active {
-  background: #fff7ed;
+  background: #f3f4f6;
   border-left-color: #ea580c;
-  color: #ea580c;
+  color: #1f2937;
+  font-weight: 600;
 }
 
 .left-rail-dot {
@@ -99,44 +100,21 @@
 .left-rail-new-btn {
   width: 100%;
   padding: 10px 16px;
-  background: #fff7ed;
-  color: #ea580c;
-  border: 1px solid #fdba74;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .left-rail-new-btn:hover {
-  background: #ffedd5;
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
-.left-rail-create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.left-rail-create-form .input {
-  width: 100%;
-  font-size: 13px;
-  padding: 8px 10px;
-}
-
-.left-rail-create-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.left-rail-create-actions .btn-primary,
-.left-rail-create-actions .btn-secondary {
-  flex: 1;
-  font-size: 13px;
-  padding: 6px 12px;
-}
 
 .left-rail-account {
   display: flex;

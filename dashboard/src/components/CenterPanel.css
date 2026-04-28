@@ -10,14 +10,6 @@
   padding: 40px 0;
 }
 
-/* --- Breadcrumb --- */
-
-.center-breadcrumb {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-bottom: 16px;
-}
-
 /* --- Header --- */
 
 .center-header {
@@ -32,16 +24,51 @@
   min-width: 0;
 }
 
+.center-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .center-client-name {
   font-size: 22px;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 2px;
+}
+
+.center-active-badge {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.center-active-badge.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.center-active-badge.active:hover {
+  background: #bbf7d0;
+}
+
+.center-active-badge.inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.center-active-badge.inactive:hover {
+  background: #e5e7eb;
 }
 
 .center-meta {
   font-size: 13px;
   color: #9ca3af;
+  margin-top: 2px;
+  display: block;
 }
 
 .center-header-right {
@@ -76,8 +103,8 @@
 }
 
 .center-tab.active {
-  border-bottom-color: #ea580c;
-  color: #ea580c;
+  border-bottom-color: #9ca3af;
+  color: #1f2937;
 }
 
 /* --- Tab section (shared by all tabs) --- */
@@ -85,7 +112,7 @@
 .tab-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .tab-section .input {
@@ -100,8 +127,8 @@
 /* --- Prompt tab --- */
 
 .prompt-textarea {
-  min-height: 240px;
-  font-family: "SF Mono", "Fira Code", "Fira Mono", monospace;
+  min-height: 0;
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -109,7 +136,7 @@
 .prompt-footer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -122,22 +149,20 @@
   color: #6b7280;
 }
 
-.prompt-sandbox-link {
-  font-size: 13px;
-  color: #ea580c;
-  font-weight: 500;
-  margin-left: auto;
+.prompt-max-input {
+  width: 72px !important;
+  padding: 4px 8px;
+  font-size: 12px;
+  text-align: center;
 }
 
-.prompt-sandbox-link:hover {
-  text-decoration: underline;
+.prompt-model-row {
+  max-width: 280px;
 }
 
-.prompt-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 8px;
+.prompt-model-select {
+  padding: 8px 12px;
+  cursor: pointer;
 }
 
 .checkbox-row {
@@ -171,7 +196,7 @@
 
 .embed-code {
   min-height: 120px;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   background: #f9fafb;
   resize: vertical;

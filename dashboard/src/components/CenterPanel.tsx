@@ -34,6 +34,7 @@ export default function CenterPanel({
   const [themeColor, setThemeColor] = useState("#ea580c");
   const [allowedOrigins, setAllowedOrigins] = useState("");
   const [maxTokens, setMaxTokens] = useState(1024);
+  const [modelName, setModelName] = useState("gemini-2.0-flash");
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export default function CenterPanel({
       setThemeColor(data.theme_color);
       setAllowedOrigins(data.allowed_origins);
       setMaxTokens(data.max_tokens);
+      setModelName(data.model_name);
       setIsActive(data.is_active);
     } catch {
       navigate("/");
@@ -73,6 +75,7 @@ export default function CenterPanel({
         theme_color: themeColor,
         allowed_origins: allowedOrigins,
         max_tokens: maxTokens,
+        model_name: modelName,
         is_active: isActive,
       });
       setMessage("Saved!");
@@ -138,15 +141,20 @@ export default function CenterPanel({
 
   return (
     <div className="center-panel">
-      <div className="center-breadcrumb">
-        chat-widget admin · /clients/{client.slug}
-      </div>
-
       <div className="center-header">
         <div className="center-header-left">
-          <h1 className="center-client-name">{client.name}</h1>
+          <div className="center-title-row">
+            <h1 className="center-client-name">{client.name}</h1>
+            <button
+              className={`center-active-badge ${isActive ? "active" : "inactive"}`}
+              onClick={() => setIsActive(!isActive)}
+              title={isActive ? "Click to deactivate" : "Click to activate"}
+            >
+              {isActive ? "Active" : "Inactive"}
+            </button>
+          </div>
           <span className="center-meta">
-            {client.slug} · {client.model_name}
+            {client.slug} · {modelName}
           </span>
         </div>
         <div className="center-header-right">
@@ -187,8 +195,8 @@ export default function CenterPanel({
           onSystemPromptChange={setSystemPrompt}
           maxTokens={maxTokens}
           onMaxTokensChange={setMaxTokens}
-          isActive={isActive}
-          onIsActiveChange={setIsActive}
+          modelName={modelName}
+          onModelNameChange={setModelName}
         />
       )}
 

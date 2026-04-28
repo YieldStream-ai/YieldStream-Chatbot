@@ -6,40 +6,23 @@ import "./LeftRail.css";
 interface Props {
   clients: Client[];
   selectedId: string | undefined;
-  onCreateClient: (name: string, slug: string) => Promise<void>;
+  onNewClient: () => void;
   onLogout: () => void;
 }
 
 export default function LeftRail({
   clients,
   selectedId,
-  onCreateClient,
+  onNewClient,
   onLogout,
 }: Props) {
   const [search, setSearch] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newSlug, setNewSlug] = useState("");
-  const [createError, setCreateError] = useState("");
 
   const filtered = clients.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.slug.toLowerCase().includes(search.toLowerCase())
   );
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setCreateError("");
-    try {
-      await onCreateClient(newName, newSlug);
-      setShowCreate(false);
-      setNewName("");
-      setNewSlug("");
-    } catch (err: any) {
-      setCreateError(err.message);
-    }
-  }
 
   function getAdminEmail(): string {
     try {
@@ -81,54 +64,22 @@ export default function LeftRail({
             <span className="left-rail-item-name">{client.name}</span>
           </Link>
         ))}
-        {filtered.length === 0 && (
-          <p className="left-rail-empty">No clients found.</p>
+        {filtered.length === 0 && clients.length > 0 && (
+          <p className="left-rail-empty">
+            No matches for &ldquo;{search}&rdquo;
+          </p>
+        )}
+        {clients.length === 0 && (
+          <p className="left-rail-empty">
+            No clients yet. Create one below.
+          </p>
         )}
       </div>
 
       <div className="left-rail-bottom">
-        {showCreate ? (
-          <form onSubmit={handleCreate} className="left-rail-create-form">
-            <input
-              placeholder="Client name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="input"
-              required
-            />
-            <input
-              placeholder="slug"
-              value={newSlug}
-              onChange={(e) =>
-                setNewSlug(
-                  e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
-                )
-              }
-              className="input"
-              required
-            />
-            {createError && <span className="error-text">{createError}</span>}
-            <div className="left-rail-create-actions">
-              <button type="submit" className="btn-primary">
-                Create
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreate(false)}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        ) : (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="left-rail-new-btn"
-          >
-            + New client
-          </button>
-        )}
+        <button onClick={onNewClient} className="left-rail-new-btn">
+          + New client
+        </button>
 
         <div className="left-rail-account">
           <span className="left-rail-email">{getAdminEmail()}</span>

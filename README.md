@@ -1,8 +1,28 @@
-# BubbleChat
+<h1 align="center">BubbleChat</h1>
 
-**A full-stack, embeddable AI chat widget with a real-time admin dashboard.**
+<p align="center"><strong>Embeddable AI Chat Widget with a Real-Time Admin Dashboard</strong></p>
 
-Deploy an AI-powered chat assistant on any website with a single script tag. Manage everything — prompts, styling, API keys — from a live-preview dashboard.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white" alt="Gemini">
+  <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL">
+</p>
+
+<p align="center"><em>Deploy an AI-powered chat assistant on any website with a single script tag. Manage everything — prompts, styling, API keys — from a live-preview dashboard.</em></p>
+
+<p align="center">
+  <a href="#architecture">Architecture</a> &bull;
+  <a href="#highlights">Highlights</a> &bull;
+  <a href="#getting-started">Getting Started</a> &bull;
+  <a href="#embed-in-30-seconds">Embed</a> &bull;
+  <a href="#project-structure">Project Structure</a>
+</p>
+
+---
 
 ![BubbleChat Dashboard](assets/bubble-chat-image.png)
 
